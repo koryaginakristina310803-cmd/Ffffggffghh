@@ -1,0 +1,632 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>(function(){var D={"loans": {"tbank-refi": {"name": "Рефинансирование", "bank": "Т-Банк", "balance": 386495.84, "rate": 36.6, "payment": 18430, "day": 6}, "tbank-purchase": {"name": "Кредит на покупку", "bank": "Т-Банк", "balance": 60104.36, "rate": 22.3, "payment": 3960, "day": 3}}, "cards": {"alfa-card": {"name": "Кредитка Альфа", "bank": "Альфа-Банк", "limit": 100000, "debt": 107062.65, "debtDate": "2026-10-29", "rate": 58.99, "minPct": 10, "minFixed": 0, "day": 23, "graceDebt": 0, "graceEnd": ""}, "sber-card": {"name": "Кредитка Сбер", "bank": "Сбербанк", "limit": 150000, "debt": 62989.04, "debtDate": "2026-10-28", "rate": 59.8, "minPct": 10, "minFixed": 0, "day": 21, "graceDebt": 62989.04, "graceEnd": "2026-12-31"}}, "incomes": {"salary": {"name": "Зарплата", "amount": 52500, "day": 5}, "advance": {"name": "Аванс", "amount": 52500, "day": 20}}, "expenses": {"transit": {"name": "Проезд", "amount": 3500, "kind": "fixed"}, "food": {"name": "Еда", "amount": 12000, "kind": "var"}, "fuel": {"name": "Бензин", "amount": 10000, "kind": "var"}, "phone": {"name": "Телефон", "amount": 750, "kind": "fixed"}}, "payments": {}, "spends": {}, "settings": {"main": {"extraIncome": 0, "cushionGoal": 50000, "cushionSaved": 0, "cushionMonthly": 10000, "cushionStart": "after", "startDebt": 616651.89, "startDate": "2026-10-29", "startBalances": {"tbank-refi": 386495.84, "tbank-purchase": 60104.36, "alfa-card": 107062.65, "sber-card": 62989.04}}}},CL={},DL={},n=0;
+function snapC(c){var o=D[c]||{};return{docs:Object.keys(o).sort().map(function(id){return{id:id,data:function(){return o[id]}}})}}
+function fire(c,id){(CL[c]||[]).forEach(function(f){f(snapC(c))});(DL[c+"/"+id]||[]).forEach(function(f){var x=(D[c]||{})[id];f({exists:!!x,data:function(){return x}})})}
+function dref(c,id){id=id||("n"+Date.now()+(n++));return{id:id,set:async function(b){D[c]=D[c]||{};D[c][id]=JSON.parse(JSON.stringify(b));setTimeout(function(){fire(c,id)},0)},update:async function(b){Object.assign(D[c][id],b);setTimeout(function(){fire(c,id)},0)},delete:async function(){if(D[c])delete D[c][id];setTimeout(function(){fire(c,id)},0)},
+ onSnapshot:function(f){var k=c+"/"+id;(DL[k]=DL[k]||[]).push(f);setTimeout(function(){var x=(D[c]||{})[id];f({exists:!!x,data:function(){return x}})},0);return function(){}}}}
+var db={collection:function(c){return{doc:function(id){return dref(c,id)},onSnapshot:function(f){(CL[c]=CL[c]||[]).push(f);setTimeout(function(){f(snapC(c))},0);return function(){}}}},doc:function(p){var s=p.split("/");return dref(s[0],s[1])}};
+window.claude={use:async function(n){return n==="db"?db:null}};})();</script></head><body style="margin:0"><title>Долги и бюджет</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@600&display=swap">
+<style>
+/* Layout: one calm column (≤760px). Tab 1 answers "what do I pay, when, where"; detail lives in the other tabs. */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --sunk:#EBEFF4; --fg:#17212B; --muted:#6B7684; --line:#E1E6EC;
+  --accent:#2A55C9; --accent-ink:#FFFFFF; --accent-soft:#E6ECFB;
+  --good:#1F8A4C; --good-soft:#E2F4EA; --warn:#B26A00; --warn-soft:#FFF1D6; --bad:#C23B32; --bad-soft:#FCE6E4;
+  --alfa:#EF3124; --sber:#21A038; --tbank:#E8C300; --other:#8A95A3; --life:#9AA6B4;
+  --f-display:"Unbounded",system-ui,sans-serif; --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --shadow:0 1px 2px rgba(40,50,90,.04),0 8px 24px rgba(40,50,90,.07);
+  --glass:rgba(255,255,255,.72); color-scheme:light;
+}
+*{box-sizing:border-box}
+html{background:#EEF2FB}
+body{background:transparent;color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.bgfx{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  radial-gradient(60% 45% at 8% 0%,#BCD2FF 0%,rgba(188,210,255,0) 70%),
+  radial-gradient(50% 40% at 100% 12%,#FFD2BC 0%,rgba(255,210,188,0) 70%),
+  radial-gradient(55% 45% at 85% 85%,#C4EEDA 0%,rgba(196,238,218,0) 70%),
+  radial-gradient(50% 40% at 0% 100%,#E6D3FF 0%,rgba(230,211,255,0) 70%),
+  linear-gradient(180deg,#F5F8FF 0%,#F8F6F3 100%)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.6)}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-block:14px 6px}
+h1{font-family:var(--f-display);font-weight:600;font-size:18px;margin:0}
+.date{color:var(--muted);font-size:13px}
+nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-inline:-4px}
+nav button{border:0;background:none;color:var(--muted);font:600 14px var(--f-body);padding:10px 12px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}
+nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-block:20px 64px;display:grid;gap:28px}
+h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0}
+h3{font-size:17px;font-weight:600;margin:0}
+.sec{display:grid;gap:12px}
+.card{background:rgba(255,255,255,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:18px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.9);min-width:0}
+.pad{padding:18px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.neutral{background:var(--sunk);color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 14px var(--f-body);padding:8px 14px;border-radius:10px;cursor:pointer}
+.btn:hover{border-color:var(--accent)} .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)} .btn.danger{color:var(--bad)} .btn.sm{padding:5px 11px;font-size:13px}
+input,select{font:15px var(--f-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;min-width:0}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+
+/* Hero */
+.hero{padding:22px;display:grid;gap:16px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(236,242,255,.9))}
+.hero .big{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,6vw,32px);line-height:1.15;letter-spacing:-.01em;text-wrap:balance}
+.hero .big em{font-style:normal;color:var(--accent)}
+.debtbar{display:flex;height:12px;border-radius:99px;overflow:hidden;gap:2px;background:var(--sunk)}
+.debtbar i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.milestones{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ms{background:rgba(42,85,201,.06);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.ms b{font-size:15px} .ms span{font-size:12px;color:var(--muted)}
+
+/* Payday blocks */
+.payday{overflow:hidden}
+.payday-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.payday-head .when{display:flex;align-items:center;gap:12px}
+.cal{width:48px;text-align:center;border-radius:10px;background:var(--accent-soft);color:var(--accent);line-height:1.1;padding:6px 0;flex:none}
+.cal b{display:block;font-size:20px} .cal span{font-size:11px;font-weight:600;text-transform:uppercase}
+.inc{font-weight:600;font-size:16px}
+.tx{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line)}
+.tx:last-child{border-bottom:0}
+.tx .what{min-width:0} .tx .what b{font-weight:600} .tx .note{grid-column:2/4;font-size:13px;color:var(--muted)}
+.tx .amt{font-weight:700;font-size:16px;text-align:right;white-space:nowrap}
+.tx.life .amt,.tx.life b{color:var(--muted);font-weight:500}
+.tx.rest{background:rgba(31,138,76,.06)}
+.steps{counter-reset:s;display:grid;gap:0}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:20px;text-align:center;color:var(--muted)}
+
+/* Months */
+.month{padding:0}
+.month summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px;flex-wrap:wrap}
+.month summary::-webkit-details-marker{display:none}
+.month summary .mname{font-weight:600;font-size:16px;text-transform:capitalize}
+.month[open] summary{border-bottom:1px solid var(--line)}
+.mrow{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px}
+.mrow:last-child{border-bottom:0}
+.mrow .bal{color:var(--muted);font-size:13px;text-align:right;min-width:92px}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:11px var(--f-body)}
+
+/* Debts */
+.debt{padding:18px;display:grid;gap:12px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px 16px}
+.fact .k{font-size:12px;color:var(--muted)} .fact .v{font-weight:600}
+.bar{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px}
+.alert{border-radius:14px;padding:14px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.alert.bad{background:var(--bad-soft)} .alert.warn{background:var(--warn-soft)} .alert.info{background:var(--accent-soft)}
+.why{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.why li{display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:14px}
+.why li b.n{width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px}
+.stack{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:2px;background:var(--sunk)}
+.stack>i{display:block;height:100%}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:11px 18px;border-bottom:1px solid var(--line)} tr:last-child td{border-bottom:0} td.r{text-align:right;white-space:nowrap}
+
+.overlay{position:fixed;inset:0;background:rgba(10,15,25,.5);display:grid;place-items:center;z-index:20;padding:16px}
+.modal{background:var(--surface);border-radius:16px;padding:20px;width:min(480px,100%);max-height:90vh;overflow:auto;display:grid;gap:14px}
+.modal form{display:grid;gap:12px}
+.modal .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal .hint{font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:30}
+@media (max-width:520px){.modal .two{grid-template-columns:1fr}.mrow{grid-template-columns:auto 1fr auto}.mrow .bal{grid-column:2/4;text-align:left;min-width:0}}
+.tx .act{grid-column:2/4;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.tx.paid{opacity:.62}
+.tx.paid .amt{text-decoration:line-through;text-decoration-thickness:1.5px}
+.btn.paybtn{padding:4px 12px;font-size:13px;border-radius:99px;border-color:var(--accent);color:var(--accent);background:transparent}
+.btn.paybtn:hover{background:var(--accent-soft)}
+.ring{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.ring svg{width:112px;height:112px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.stat{background:rgba(42,85,201,.06);border-radius:12px;padding:12px 14px;display:grid;gap:2px}
+.stat b{font-size:18px} .stat span{font-size:12px;color:var(--muted)}
+.prow{display:grid;gap:6px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.prow:last-child{border-bottom:0}
+.hist{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line);font-size:14px}
+.hist:last-child{border-bottom:0}
+.link{background:none;border:0;color:var(--muted);font:500 13px var(--f-body);cursor:pointer;padding:2px 4px;text-decoration:underline}
+.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.inline>*{flex:1 1 130px}
+.inline .btn{flex:0 0 auto}
+.whatif-res{border-radius:12px;padding:12px 14px;background:var(--good-soft);font-size:14px}
+.spendbar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.spendbar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.spendbar.over i{background:var(--bad)}
+.mini{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 18px;flex-wrap:wrap;cursor:pointer}
+@media (max-width:520px){.ring{grid-template-columns:1fr;justify-items:start}.hist{grid-template-columns:auto 1fr auto}.hist .when{grid-column:2/4}}
+</style>
+
+<div class="bgfx" aria-hidden="true"></div>
+<header>
+  <div class="wrap">
+    <div class="top"><h1>Долги и бюджет</h1><span class="date" id="today"></span></div>
+    <nav role="tablist" id="tabs">
+      <button role="tab" data-tab="todo">Что платить</button>
+      <button role="tab" data-tab="plan">План</button>
+      <button role="tab" data-tab="progress">Прогресс</button>
+      <button role="tab" data-tab="budget">Бюджет</button>
+      <button role="tab" data-tab="debts">Долги</button>
+    </nav>
+  </div>
+</header>
+<div class="wrap"><main id="app"><div class="empty">Загружаю данные…</div></main></div>
+<div id="modalRoot"></div>
+
+<script>
+(function(){
+const TODAY=new Date(); TODAY.setHours(0,0,0,0);
+const MON=["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+const MON_D=["январю","февралю","марту","апрелю","маю","июню","июлю","августу","сентябрю","октябрю","ноябрю","декабрю"];
+const MON_G=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MON_P=["январе","феврале","марте","апреле","мае","июне","июле","августе","сентябре","октябре","ноябре","декабре"];
+document.getElementById("today").textContent=TODAY.getDate()+" "+MON_G[TODAY.getMonth()];
+
+const rub=n=>(Math.round(n)||0).toLocaleString("ru-RU")+" ₽";
+const pct=n=>(Math.round(n*10)/10).toLocaleString("ru-RU")+"%";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num=v=>{const x=parseFloat(String(v??"").replace(/\s/g,"").replace(",","."));return isFinite(x)?x:0;};
+const r2=n=>Math.round(n*100)/100;
+const plural=(n,a,b,c)=>{n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return c;if(n1>1&&n1<5)return b;if(n1===1)return a;return c;};
+const parseISO=s=>{if(!s)return null;const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3]):null;};
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayISO=()=>iso(TODAY);
+const daysTo=d=>Math.round((d-TODAY)/86400000);
+const fmtD=d=>d.getDate()+" "+MON_G[d.getMonth()];
+const monName=(y,m)=>{const d=new Date(y,m,1);return MON[d.getMonth()]+" "+d.getFullYear();};
+const monD=(y,m)=>{const d=new Date(y,m,1);return MON_D[d.getMonth()]+" "+d.getFullYear();};
+const dateIn=(y,m,day)=>{const last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(Math.max(1,day),last));};
+const inDays=n=>n<=0?"сегодня":n===1?"завтра":"через "+n+" "+plural(n,"день","дня","дней");
+const bankColor=b=>{b=String(b||"").toLowerCase(); if(b.includes("альф"))return"var(--alfa)"; if(b.includes("сбер"))return"var(--sber)"; if(b.includes("т-банк")||b.includes("тиньк"))return"var(--tbank)"; return"var(--other)";};
+
+/* ---------- State ---------- */
+const COLS=["loans","cards","incomes","expenses","payments","spends"];
+const DEF={extraIncome:0,cushionGoal:50000,cushionSaved:0,cushionMonthly:0,cushionStart:"after",startDebt:null,startDate:null,startBalances:{}};
+const state={loans:[],cards:[],incomes:[],expenses:[],payments:[],spends:[],settings:{...DEF},loaded:false,db:null,whatif:{amount:0,k:0}};
+
+function accrue(c){const bd=parseISO(c.debtDate),base=num(c.debt),out=Math.max(0,base-num(c.graceDebt));
+  if(!bd||num(c.rate)<=0||out<=0)return{...c,bankDebt:base,accr:0,accrDays:0};
+  const days=Math.max(0,-daysTo(bd)); const accr=out*num(c.rate)/36500*days; return{...c,debt:base+accr,bankDebt:base,accr,accrDays:days};}
+function V(){return{...state,cards:state.cards.map(accrue)};}
+const CHECK_EVERY=7;
+function checkInfo(c){const out=Math.max(0,num(c.debt)-num(c.graceDebt)); if(num(c.rate)<=0||out<=0)return null; const bd=parseISO(c.debtDate);
+  if(!bd)return{due:TODAY,ago:null,overdue:true}; const due=new Date(bd); due.setDate(due.getDate()+CHECK_EVERY); return{due,ago:-daysTo(bd),overdue:due<=TODAY};}
+const currentDebt=v=>v.loans.reduce((s,l)=>s+num(l.balance),0)+v.cards.reduce((s,c)=>s+num(c.debt),0);
+
+/* ---------- Plan engine ----------
+   Month by month: incomes arrive on paydays; living costs and regular loan payments come first;
+   grace-period cards get an even share so they close before the deadline; cards already charging
+   interest get the rest (highest rate first); then early repayment of the most expensive loan.
+   Payments already marked as paid in the current plan month are added back, so the month's plan
+   stays stable and those rows just show as paid. */
+function payPlanStart(paydays){ let y=TODAY.getFullYear(), m=TODAY.getMonth(); if(!paydays.some(p=>dateIn(y,m,p.day)>=TODAY)){m++; if(m>11){m=0;y++;}} return {y,m}; }
+function getPaydays(v){ return v.incomes.filter(i=>num(i.amount)>0).map(i=>({id:i.id,name:i.name,day:Math.max(1,Math.round(num(i.day))||1),amount:num(i.amount)})).sort((a,b)=>a.day-b.day); }
+function buildPlan(v,opts={}){
+  const S=state.settings;
+  const paydays=getPaydays(v); if(!paydays.length) return null;
+  const extraInc=num(S.extraIncome);
+  const payIncome=paydays.reduce((s,p)=>s+p.amount,0), income=payIncome+extraInc;
+  const expenses=v.expenses.reduce((s,e)=>s+num(e.amount),0);
+  const {y,m}=payPlanStart(paydays);
+  const m0=new Set(paydays.map(p=>iso(dateIn(y,m,p.day))));
+  const back={}, backG={};
+  v.payments.forEach(p=>{ const d=String(p.key||"").split("@")[1]||""; if(m0.has(d.slice(0,10))){ back[p.debtId]=(back[p.debtId]||0)+num(p.applied); backG[p.debtId]=(backG[p.debtId]||0)+num(p.graceApplied); } });
+  const loans=v.loans.map(l=>({kind:"loan",id:l.id,name:l.name,bank:l.bank,bal:num(l.balance)+(back[l.id]||0),rate:num(l.rate),pay:num(l.payment),day:Math.max(1,Math.round(num(l.day))||1)})).filter(l=>l.bal>0.5);
+  const cards=v.cards.map(c=>{const ge=parseISO(c.graceEnd), gd=num(c.graceDebt)+(backG[c.id]||0); return {kind:"card",id:c.id,name:c.name,bank:c.bank,bal:num(c.debt)+(back[c.id]||0),rate:num(c.rate),minPct:num(c.minPct)||5,day:Math.round(num(c.day))||0,graceEnd:ge,grace:gd>0&&ge&&ge>=TODAY};}).filter(c=>c.bal>0.5);
+  const all=[...cards,...loans]; const startDebt=all.reduce((s,d)=>s+d.bal,0);
+  const paydayFor=d=>{let p=null;for(const x of paydays)if(x.day<=d)p=x;return p||paydays[paydays.length-1];};
+  const firstPay=dateIn(y,m,paydays[0].day);
+  const now=[]; loans.forEach(l=>{ let due=dateIn(TODAY.getFullYear(),TODAY.getMonth(),l.day); if(due<TODAY) due=dateIn(TODAY.getFullYear(),TODAY.getMonth()+1,l.day);
+    if(due<firstPay) now.push({debt:l,amount:l.pay,due,key:l.id+"@now-"+iso(due)}); });
+  const months=[]; let interest=0, cardsClosed=cards.length?null:-1, freeAt=null, cush=num(S.cushionSaved), cushAt=cush>=num(S.cushionGoal)&&num(S.cushionGoal)>0?-1:null;
+  for(let k=0;k<120 && all.some(d=>d.bal>0.5);k++){
+    const my=new Date(y,m+k,1), Y=my.getFullYear(), M=my.getMonth();
+    const lines=new Map(); const add=(d,amt,type)=>{ if(amt<=0.5) return; const L=lines.get(d)||{debt:d,regular:0,extra:0}; L[type]+=amt; lines.set(d,L); };
+    all.forEach(d=>{ if(d.bal<=0.5) return; if(d.kind==="card"&&d.grace&&d.graceEnd&&new Date(Y,M+1,0)<=d.graceEnd) return; const i=d.bal*d.rate/1200; d.bal+=i; interest+=i; });
+    let money=income-expenses+(opts.lump&&opts.lump.k===k?num(opts.lump.amount):0);
+    loans.forEach(l=>{ if(l.bal<=0.5) return; const p=Math.min(l.pay,l.bal); l.bal-=p; money-=p; add(l,p,"regular"); });
+    const short=money<0; money=Math.max(0,money);
+    let cushion=0;
+    if(!opts.minOnly && num(S.cushionMonthly)>0 && cush<num(S.cushionGoal) && (S.cushionStart==="now"||cardsClosed!=null)){
+      cushion=Math.min(num(S.cushionMonthly),num(S.cushionGoal)-cush,money); money-=cushion; cush+=cushion; if(cush>=num(S.cushionGoal)-0.5&&cushAt==null) cushAt=k; }
+    const act=cards.filter(c=>c.bal>0.5);
+    act.filter(c=>c.grace).forEach(c=>{ const left=c.graceEnd?Math.max(1,(c.graceEnd.getFullYear()-Y)*12+(c.graceEnd.getMonth()-M)+1):1;
+      const need=opts.minOnly?Math.max(c.bal*c.minPct/100,300):Math.max(c.bal/left,c.bal*c.minPct/100,300); const p=Math.min(c.bal,need,money); c.bal-=p; money-=p; add(c,p,"regular"); });
+    const hot=act.filter(c=>!c.grace).sort((a,b)=>b.rate-a.rate);
+    hot.forEach(c=>{ const p=Math.min(c.bal,Math.max(c.bal*c.minPct/100,300),money); c.bal-=p; money-=p; add(c,p,"regular"); });
+    if(!opts.minOnly){
+      hot.forEach(c=>{ const p=Math.min(c.bal,money); c.bal-=p; money-=p; add(c,p,"extra"); });
+      act.filter(c=>c.grace).forEach(c=>{ const p=Math.min(c.bal,money); c.bal-=p; money-=p; add(c,p,"extra"); });
+      loans.filter(l=>l.bal>0.5).sort((a,b)=>b.rate-a.rate).forEach(l=>{ const p=Math.min(l.bal,money); l.bal-=p; money-=p; add(l,p,"extra"); });
+    }
+    all.forEach(d=>{ if(d.bal<=0.5&&d.closed==null){ d.bal=0; d.closed=k; } });
+    if(cardsClosed==null && cards.every(c=>c.bal<=0.5)) cardsClosed=k;
+    months.push({k,Y,M,lines:[...lines.values()],closed:all.filter(d=>d.closed===k),left:money,short,cushion,cush,remain:all.reduce((s,d)=>s+d.bal,0),bals:Object.fromEntries(all.map(d=>[d.id,d.bal]))});
+    if(!all.some(d=>d.bal>0.5)){ freeAt=k; break; }
+  }
+  return {paydays,payIncome,income,extraInc,expenses,months,interest,startDebt,cardsClosed,freeAt,now,paydayFor,startY:y,startM:m,debts:all,cushAt};
+}
+
+function paydayBreakdown(plan,mo){
+  const {paydays,payIncome,expenses,paydayFor,extraInc}=plan;
+  const blocks=paydays.map(p=>({p,date:dateIn(mo.Y,mo.M,p.day),left:p.amount,items:[]}));
+  blocks.forEach(b=>{ const e=expenses*b.p.amount/payIncome; b.items.push({life:true,amount:e}); b.left-=e; });
+  if(extraInc>0){ const b=blocks[blocks.length-1]; b.extra=extraInc; b.left+=extraInc; }
+  mo.lines.filter(L=>L.debt.kind==="loan"&&L.regular>0).forEach(L=>{ const p=paydayFor(L.debt.day); const b=blocks.find(x=>x.p===p);
+    const due=p.day<=L.debt.day?dateIn(mo.Y,mo.M,L.debt.day):dateIn(mo.Y,mo.M+1,L.debt.day);
+    b.items.push({debt:L.debt,amount:L.regular,due,type:"loan"}); b.left-=L.regular; });
+  if(mo.cushion>0){ const b=blocks[blocks.length-1]; b.items.push({cushion:true,amount:mo.cushion}); b.left-=mo.cushion; }
+  const queue=[...mo.lines.filter(L=>L.debt.kind==="card"&&!L.debt.grace),...mo.lines.filter(L=>L.debt.kind==="card"&&L.debt.grace),...mo.lines.filter(L=>L.debt.kind==="loan"&&L.extra>0)]
+    .map(L=>({debt:L.debt,amount:L.debt.kind==="card"?L.regular+L.extra:L.extra,early:L.debt.kind==="loan"}));
+  for(const q of queue){ for(const b of blocks){ if(q.amount<=0.5) break; const p=Math.min(q.amount,Math.max(0,b.left)); if(p<=0.5) continue;
+      b.items.push({debt:q.debt,amount:p,type:"pay",early:q.early}); b.left-=p; q.amount-=p; }
+    if(q.amount>0.5){ const b=blocks[blocks.length-1]; b.items.push({debt:q.debt,amount:q.amount,type:"pay",early:q.early}); b.left-=q.amount; } }
+  blocks.forEach(b=>b.items.forEach(it=>{ if(it.debt) it.key=it.debt.id+"@"+iso(b.date)+(it.early?"-early":""); }));
+  return blocks;
+}
+const paidFor=key=>state.payments.filter(p=>p.key===key).reduce((s,p)=>s+num(p.amount),0);
+
+/* ---------- Views ---------- */
+const TABS=["todo","plan","debts","budget","progress"];
+let tab=(location.hash||"").slice(1); if(!TABS.includes(tab)) tab="todo";
+const app=document.getElementById("app");
+function setTab(t){ tab=t; if(location.hash.slice(1)!==t) history.replaceState(null,"","#"+t); render(); window.scrollTo(0,0); }
+document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]"); if(b) setTab(b.dataset.tab);});
+window.addEventListener("hashchange",()=>{const t=location.hash.slice(1); if(TABS.includes(t)&&t!==tab){tab=t;render();}});
+
+function checkBanner(){
+  return state.cards.map(c=>({c,i:checkInfo(c)})).filter(x=>x.i&&x.i.overdue).map(({c,i})=>`<div class="alert bad"><div style="flex:1 1 260px;min-width:0"><b>Сверь долг: ${esc(c.name)}</b><div class="small">${i.ago==null?"":`Последний раз ${i.ago} ${plural(i.ago,"день","дня","дней")} назад. `}Открой приложение банка и впиши текущую задолженность.</div></div>
+    <div style="display:flex;gap:8px;flex:1 1 220px"><input id="chk_${esc(c.id)}" type="number" step="0.01" inputmode="decimal" placeholder="Долг сейчас, ₽"><button class="btn primary" data-check="${esc(c.id)}">Сохранить</button></div></div>`).join("");
+}
+let lastFocus=null;
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+  if(!state.loaded) return;
+  const ae=document.activeElement; lastFocus=ae&&ae.id&&app.contains(ae)?{id:ae.id,pos:ae.selectionStart}:null;
+  const v=V();
+  if(["loans","cards","incomes","expenses"].every(c=>state[c].length===0)){ app.innerHTML=`<div class="empty">Данных пока нет. Пришли Claude свои кредиты, карты, доходы и расходы, или добавь их во вкладках «Долги» и «Бюджет».</div>`+(tab==="debts"?renderDebts(v):tab==="budget"?renderBudget(v):""); return; }
+  app.innerHTML=checkBanner()+({todo:renderTodo,plan:renderPlan,debts:renderDebts,budget:renderBudget,progress:renderProgress}[tab])(v);
+  if(lastFocus){ const n=document.getElementById(lastFocus.id); if(n){ n.focus(); try{ if(lastFocus.pos!=null) n.setSelectionRange(lastFocus.pos,lastFocus.pos);}catch(_){}} }
+}
+
+function heroBlock(v,plan){
+  const debts=[...v.cards.filter(c=>num(c.debt)>0).map(c=>({name:c.name,bank:c.bank,bal:num(c.debt)})),...v.loans.filter(l=>num(l.balance)>0).map(l=>({name:l.name,bank:l.bank,bal:num(l.balance)}))];
+  const total=debts.reduce((s,d)=>s+d.bal,0)||1;
+  const free=plan&&plan.freeAt!=null?monD(plan.startY,plan.startM+plan.freeAt):null;
+  const S=state.settings, start=num(S.startDebt), done=start>0?Math.max(0,start-total):0;
+  return `<section class="card hero">
+    <div class="row small muted" style="flex-wrap:wrap"><span>Общий долг сейчас · ${rub(total)}</span>${start>0?`<span>погашено ${rub(done)} из ${rub(start)}</span>`:""}</div>
+    <div class="big">${free?`Без долгов к <em>${free}</em>`:"Добавь доходы, чтобы построить план"}</div>
+    <div class="debtbar">${debts.map(d=>`<i style="width:${d.bal/total*100}%;background:${bankColor(d.bank)}" title="${esc(d.name)}: ${rub(d.bal)}"></i>`).join("")}</div>
+    <div class="legend">${debts.map(d=>`<span><i class="dot" style="background:${bankColor(d.bank)}"></i>${esc(d.name)} <b>${rub(d.bal)}</b></span>`).join("")}</div>
+    ${plan?`<div class="milestones">${plan.debts.filter(d=>d.closed!=null).sort((a,b)=>a.closed-b.closed).map(d=>`<div class="ms"><span>${esc(d.name)}</span><b style="text-transform:capitalize">${monName(plan.startY,plan.startM+d.closed)}</b></div>`).join("")}</div>`:""}
+  </section>`;
+}
+
+function noteFor(it,mo){
+  const d=it.debt;
+  if(it.type==="loan") return `спишется ${fmtD(it.due)} — положи на счёт заранее`;
+  if(it.early) return "досрочное погашение: в приложении банка выбери «сократить срок»";
+  if(d.grace) return `обязательный платёж входит в эту сумму · весь долг закрыть до ${fmtD(d.graceEnd)}, иначе начислят проценты за весь период`;
+  return (mo.closed.includes(d)?"Это закроет карту. ":"")+"внеси сразу: проценты начисляются каждый день";
+}
+function payControls(it,kind){
+  const paid=paidFor(it.key);
+  if(paid>0) return `<div class="act"><span class="pill good">Оплачено ${rub(paid)}</span>${paid<it.amount-1?`<button class="btn paybtn" data-pay="${esc(it.debt.id)}|${kind}|${Math.round(it.amount-paid)}|${esc(it.key)}|${it.early?1:0}">Доплатить ${rub(it.amount-paid)}</button>`:""}</div>`;
+  return `<div class="act"><button class="btn paybtn" data-pay="${esc(it.debt.id)}|${kind}|${Math.round(it.amount)}|${esc(it.key)}|${it.early?1:0}">Оплачено</button></div>`;
+}
+function txRow(it,mo){
+  if(it.life) return `<div class="tx life"><span class="dot" style="background:var(--life)"></span><div class="what"><b>Оставить на жизнь</b></div><div class="amt">${rub(it.amount)}</div><div class="note">еда, бензин, проезд, телефон до следующей выплаты</div></div>`;
+  if(it.cushion) return `<div class="tx"><span class="dot" style="background:var(--good)"></span><div class="what"><b>Отложить в подушку</b></div><div class="amt">${rub(it.amount)}</div><div class="note">на отдельный счёт или вклад, отметь во вкладке «Прогресс»</div></div>`;
+  const d=it.debt, paid=paidFor(it.key)>=it.amount-1;
+  return `<div class="tx ${paid?"paid":""}"><span class="dot" style="background:${bankColor(d.bank)}"></span><div class="what"><b>${esc(d.name)}</b> <span class="muted small">${esc(d.bank||"")}</span></div><div class="amt">${rub(it.amount)}</div><div class="note">${noteFor(it,mo)}</div>${payControls(it,d.kind)}</div>`;
+}
+
+function spendWidget(v){
+  const lim=v.expenses.reduce((s,e)=>s+num(e.amount),0); if(!lim) return "";
+  const spent=monthSpends().reduce((s,x)=>s+num(x.amount),0); const share=Math.min(100,spent/lim*100);
+  return `<section class="card mini" data-goto="budget"><div style="flex:1 1 200px;min-width:0"><div class="small muted">Траты в ${MON_P[TODAY.getMonth()]}</div><b>${rub(spent)}</b> <span class="muted small">из ${rub(lim)}</span>
+    <div class="spendbar ${spent>lim?"over":""}" style="margin-top:6px"><i style="width:${share}%"></i></div></div><span class="btn sm">Записать трату</span></section>`;
+}
+
+function renderTodo(v){
+  const plan=buildPlan(v);
+  if(!plan) return heroBlock(v,null)+`<div class="empty">Добавь доходы с датами во вкладке «Бюджет»: план строится по дням зарплаты.</div>`;
+  const mo0=plan.months[0], mo1=plan.months[1];
+  if(!mo0) return heroBlock(v,plan)+`<div class="empty">Долгов нет. Поздравляю!</div>`;
+  const blocks=[...paydayBreakdown(plan,mo0).map(b=>({...b,mo:mo0})),...(mo1?paydayBreakdown(plan,mo1).map(b=>({...b,mo:mo1})):[])].slice(0,3);
+  const nowBlock=plan.now.length?`<section class="sec"><h2>Сейчас, до ${fmtD(blocks[0].date)}</h2><div class="card payday">
+      ${plan.now.map(n=>{const paid=paidFor(n.key)>=n.amount-1; return `<div class="tx ${paid?"paid":""}"><span class="dot" style="background:${bankColor(n.debt.bank)}"></span><div class="what"><b>${esc(n.debt.name)}</b> <span class="muted small">${esc(n.debt.bank||"")}</span></div><div class="amt">${rub(n.amount)}</div><div class="note">спишется ${fmtD(n.due)} · ${inDays(daysTo(n.due))}. Деньги с прошлой выплаты должны лежать на счёте</div>${payControls(n,"loan")}</div>`;}).join("")}
+    </div></section>`:"";
+  const blockHTML=b=>{ const used=b.items.reduce((s,i)=>s+i.amount,0); const rest=b.p.amount+(b.extra||0)-used;
+    return `<div class="card payday"><div class="payday-head"><div class="when"><div class="cal"><b>${b.date.getDate()}</b><span>${MON_G[b.date.getMonth()].slice(0,3)}</span></div>
+      <div><div class="inc">${esc(b.p.name)} · ${rub(b.p.amount)}${b.extra?` <span class="muted small">+ подработка ≈ ${rub(b.extra)}</span>`:""}</div><div class="small muted">${inDays(daysTo(b.date))}</div></div></div></div>
+      ${b.items.filter(i=>i.debt).map(i=>txRow(i,b.mo)).join("")}${b.items.filter(i=>!i.debt).map(i=>txRow(i,b.mo)).join("")}
+      ${Math.abs(rest)>50?`<div class="tx rest"><span></span><div class="what"><b>${rest>0?"Свободно":"Не хватает"}</b></div><div class="amt" style="color:var(${rest>0?"--good":"--bad"})">${rub(Math.abs(rest))}</div></div>`:""}
+    </div>`; };
+  return heroBlock(v,plan)+spendWidget(v)+nowBlock+`<section class="sec"><h2>Что сделать с ближайшими выплатами</h2>${blocks.map(blockHTML).join("")}
+    <p class="small muted" style="margin:0">Перевела деньги — нажми «Оплачено». Остаток долга уменьшится, а план пересчитается.</p></section>`+whyBlock(v);
+}
+
+function whyBlock(v){
+  const hot=v.cards.filter(c=>num(c.debt)>num(c.graceDebt)&&num(c.rate)>0).sort((a,b)=>num(b.rate)-num(a.rate));
+  const grace=v.cards.filter(c=>num(c.graceDebt)>0&&parseISO(c.graceEnd)>=TODAY);
+  const loan=[...v.loans].filter(l=>num(l.balance)>0).sort((a,b)=>num(b.rate)-num(a.rate))[0];
+  const items=[];
+  grace.forEach(c=>items.push(`<b>${esc(c.name)}</b> закрываем равными частями до ${fmtD(parseISO(c.graceEnd))}. Если не успеть, проценты по ставке ${pct(num(c.rate))} начислят задним числом за весь льготный период.`));
+  hot.forEach(c=>{const o=Math.max(0,num(c.debt)-num(c.graceDebt)); items.push(`<b>${esc(c.name)}</b> получает все остальные свободные деньги: на ${rub(o)} каждый день капает ≈ ${rub(o*num(c.rate)/36500)} процентов (${pct(num(c.rate))} годовых).`);});
+  if(loan) items.push(`Когда карты закрыты, те же деньги идут на досрочное погашение: <b>${esc(loan.name)}</b> первым, у него самая высокая ставка (${pct(num(loan.rate))}).`);
+  items.push(`Пока долги не закрыты, не трать с кредиток: новые покупки сдвинут весь план.`);
+  return `<section class="sec"><h2>Почему такой порядок</h2><div class="card pad"><ul class="why">${items.map((t,i)=>`<li><b class="n">${i+1}</b><span>${t}</span></li>`).join("")}</ul></div>
+    <p class="small muted" style="margin:0">Расчёт приблизительный: банки начисляют проценты по своим правилам. Раз в неделю приложение попросит сверить долг по карте.</p></section>`;
+}
+
+function chartSVG(plan,alt){
+  const data=[plan.startDebt,...plan.months.map(m=>m.remain)]; const data2=alt?[alt.startDebt,...alt.months.map(m=>m.remain)]:null;
+  const W=700,H=280,L=56,R=12,T=10,B=26; const n=Math.max(data.length,data2?data2.length:0)-1||1; const max=Math.max(1,...data);
+  const p=Math.pow(10,Math.floor(Math.log10(max))); const nice=[1,2,2.5,5,10].map(x=>x*p).find(x=>x>=max);
+  const x=i=>L+(W-L-R)*i/n, y=v=>T+(H-T-B)*(1-v/nice); const fk=v=>v>=1e6?(v/1e6).toLocaleString("ru-RU")+" млн":Math.round(v/1e3)+" тыс";
+  const pts=d=>d.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const step=Math.max(1,Math.ceil(n/6)); const xt=[]; for(let i=0;i<=n;i+=step) xt.push(i);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Остаток долга по месяцам">
+   ${[0,.5,1].map(f=>`<line x1="${L}" x2="${W-R}" y1="${y(f*nice)}" y2="${y(f*nice)}" stroke="var(--line)"/><text x="${L-8}" y="${y(f*nice)+4}" text-anchor="end">${f?fk(f*nice):"0"}</text>`).join("")}
+   ${xt.map(i=>{const d=new Date(plan.startY,plan.startM+i-1,1);return `<text x="${x(i)}" y="${H-6}" text-anchor="middle">${i===0?"сейчас":MON[d.getMonth()].slice(0,3)+(d.getMonth()===0?" "+String(d.getFullYear()).slice(2):"")}</text>`;}).join("")}
+   <polygon points="${x(0)},${y(0)} ${pts(data)} ${x(data.length-1)},${y(0)}" fill="var(--accent)" opacity=".12"/>
+   <polyline points="${pts(data)}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+   ${data2?`<polyline points="${pts(data2)}" fill="none" stroke="var(--good)" stroke-width="2" stroke-dasharray="6 4"/>`:""}
+   <circle cx="${x(data.length-1)}" cy="${y(data[data.length-1])}" r="4" fill="var(--accent)"/></svg>`;
+}
+
+function whatIfBlock(v,plan){
+  const W=state.whatif, S=state.settings;
+  let res="";
+  if(num(W.amount)>0){ const alt=buildPlan(v,{lump:{k:num(W.k),amount:num(W.amount)}});
+    const dm=(plan.freeAt??120)-(alt.freeAt??120), save=plan.interest-alt.interest;
+    res=`<div class="whatif-res">Долги закроются к <b>${alt.freeAt!=null?monD(alt.startY,alt.startM+alt.freeAt):"—"}</b>${dm>0?`, на ${dm} ${plural(dm,"месяц","месяца","месяцев")} раньше`:""}. Сэкономишь на процентах ≈ <b>${rub(save)}</b>.
+      ${alt.debts.filter(d=>d.closed!=null).map(d=>{const o=plan.debts.find(x=>x.id===d.id); return o&&o.closed!=null&&d.closed<o.closed?`<div class="small">${esc(d.name)}: ${monName(alt.startY,alt.startM+d.closed)} вместо ${monName(plan.startY,plan.startM+o.closed)}</div>`:"";}).join("")}</div>`; }
+  return `<section class="sec"><h2>Что если</h2><div class="card pad" style="display:grid;gap:14px">
+    <div class="small muted">Впиши разовые деньги: премию, доход с подработки, продажу чего-то. План не изменится, пока ты их не внесёшь.</div>
+    <div class="inline"><label class="f" for="wiAmount">Разовая сумма, ₽<input id="wiAmount" type="number" min="0" step="1000" inputmode="numeric" value="${num(W.amount)||""}" placeholder="например, 20000"></label>
+      <label class="f" for="wiMonth">Когда<select id="wiMonth">${plan.months.slice(0,12).map(mo=>`<option value="${mo.k}" ${mo.k===num(W.k)?"selected":""}>${monName(mo.Y,mo.M)}</option>`).join("")}</select></label></div>
+    ${res}
+    <div style="border-top:1px solid var(--line);padding-top:14px" class="inline"><label class="f" for="extraIncome">Подработка в среднем, ₽ в месяц<input id="extraIncome" type="number" min="0" step="1000" inputmode="numeric" value="${num(S.extraIncome)||""}" placeholder="0"><span class="hint small">Если укажешь, эти деньги каждый месяц пойдут в план</span></label></div>
+  </div></section>`;
+}
+
+function renderPlan(v){
+  const plan=buildPlan(v);
+  if(!plan) return `<div class="empty">Добавь доходы с датами во вкладке «Бюджет», чтобы построить план.</div>`;
+  const alt=num(state.whatif.amount)>0?buildPlan(v,{lump:{k:num(state.whatif.k),amount:num(state.whatif.amount)}}):null;
+  return `<section class="sec"><h2>Остаток долга</h2><div class="card pad chart">${chartSVG(plan,alt)}
+      <div class="legend" style="margin-top:8px"><span><i class="dot" style="background:var(--accent)"></i>По плану</span>${alt?`<span><i class="dot" style="background:var(--good)"></i>С разовой суммой</span>`:""}<span class="muted">Переплата по процентам ≈ <b style="color:var(--fg)">${rub(plan.interest)}</b></span></div></div></section>
+  ${whatIfBlock(v,plan)}
+  <section class="sec"><h2>По месяцам</h2>
+    ${plan.months.map((mo,i)=>{ const tot=mo.lines.reduce((s,L)=>s+L.regular+L.extra,0);
+      return `<details class="card month" ${i<3?"open":""}><summary><span class="mname">${monName(mo.Y,mo.M)}</span><span class="small muted">в долги ${rub(tot)} · останется ${rub(mo.remain)}</span>
+        ${mo.closed.length?`<span style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap">${mo.closed.map(d=>`<span class="pill good">Погашено: ${esc(d.name)}</span>`).join("")}</span>`:""}</summary>
+        ${mo.lines.sort((a,b)=>(b.regular+b.extra)-(a.regular+a.extra)).map(L=>`<div class="mrow"><span class="dot" style="background:${bankColor(L.debt.bank)}"></span><span>${esc(L.debt.name)}${L.extra>0.5&&L.debt.kind==="loan"?` <span class="pill neutral">досрочно +${rub(L.extra)}</span>`:""}</span><b>${rub(L.regular+L.extra)}</b><span class="bal">остаток ${rub(mo.bals[L.debt.id])}</span></div>`).join("")}
+        ${mo.cushion>0?`<div class="mrow"><span class="dot" style="background:var(--good)"></span><span>Подушка</span><b>${rub(mo.cushion)}</b><span class="bal">накоплено ${rub(mo.cush)}</span></div>`:""}
+        ${mo.short?`<div class="mrow" style="color:var(--bad)"><span></span><span>Денег не хватает на обязательные платежи</span></div>`:""}
+      </details>`;}).join("")}
+  </section>`;
+}
+
+function renderDebts(v){
+  const loanM=l=>{const B=num(l.balance),P=num(l.payment),r=num(l.rate)/1200; if(B<=0)return 0; if(P<=0||P<=B*r)return Infinity; return r?Math.ceil(-Math.log(1-r*B/P)/Math.log(1+r)):Math.ceil(B/P);};
+  const cards=v.cards.map(c=>{const lim=num(c.limit),d=num(c.debt),use=lim?d/lim*100:0,gd=num(c.graceDebt),ge=parseISO(c.graceEnd),out=Math.max(0,d-gd); const ci=checkInfo(c);
+    return `<article class="card debt"><div class="row" style="align-items:flex-start"><div style="display:flex;gap:10px;align-items:center;min-width:0"><span class="dot" style="background:${bankColor(c.bank)};width:12px;height:12px"></span><div><h3>${esc(c.name)}</h3><div class="small muted">${esc(c.bank||"")} · кредитная карта · ${num(c.rate)?pct(num(c.rate))+" годовых":"ставка не указана"}</div></div></div><button class="btn sm" data-edit="cards:${c.id}">Изменить</button></div>
+      <div><div class="row small"><span>Долг <b style="font-size:17px">${rub(d)}</b></span><span class="muted">лимит ${rub(lim)}</span></div><div class="bar" style="margin-top:6px"><i style="width:${Math.min(100,use)}%;background:${use>100?"var(--bad)":bankColor(c.bank)}"></i></div></div>
+      <div class="facts">
+        <div class="fact"><div class="k">Статус</div><div class="v">${d<=0.5?`<span class="pill good">погашена</span>`:gd>0&&ge?`<span class="pill good">без процентов до ${fmtD(ge)}</span>`:out>0?`<span class="pill bad">идут проценты</span>`:"—"}</div></div>
+        <div class="fact"><div class="k">Проценты</div><div class="v">${out>0&&num(c.rate)?"≈ "+rub(out*num(c.rate)/36500)+" в день":"0 ₽"}</div></div>
+        <div class="fact"><div class="k">Обязательный платёж</div><div class="v">${num(c.minFixed)>0?rub(c.minFixed):"≈ "+rub(d>0?Math.max(d*(num(c.minPct)||5)/100,300):0)}</div><div class="small muted">${num(c.day)?"до ≈ "+fmtD(dateIn(TODAY.getFullYear(),TODAY.getMonth()+(TODAY.getDate()>num(c.day)?1:0),num(c.day))):"дата появится в выписке"}</div></div>
+        ${ci?`<div class="fact"><div class="k">Сверка с банком</div><div class="v">${ci.overdue?"пора":fmtD(ci.due)}</div><div class="small muted">${c.accrDays?`банк: ${rub(c.bankDebt)} на ${fmtD(parseISO(c.debtDate))}, +${rub(c.accr)} оценка`:"сумма из банка свежая"}</div></div>`:""}
+      </div></article>`;}).join("");
+  const loans=v.loans.map(l=>{const n=loanM(l); return `<article class="card debt"><div class="row" style="align-items:flex-start"><div style="display:flex;gap:10px;align-items:center;min-width:0"><span class="dot" style="background:${bankColor(l.bank)};width:12px;height:12px"></span><div><h3>${esc(l.name)}</h3><div class="small muted">${esc(l.bank||"")} · кредит · ${pct(num(l.rate))} годовых</div></div></div><button class="btn sm" data-edit="loans:${l.id}">Изменить</button></div>
+      <div class="facts">
+        <div class="fact"><div class="k">Остаток</div><div class="v" style="font-size:17px">${rub(l.balance)}</div></div>
+        <div class="fact"><div class="k">Платёж</div><div class="v">${rub(l.payment)}</div><div class="small muted">${num(l.day)}-го числа</div></div>
+        <div class="fact"><div class="k">Без досрочных закроется</div><div class="v">${num(l.balance)<=0.5?"погашен":n===Infinity?"не гасится":monName(TODAY.getFullYear(),TODAY.getMonth()+n)}</div><div class="small muted">${n===Infinity||!n?"":"переплата ≈ "+rub(Math.max(0,n*num(l.payment)-num(l.balance)))}</div></div>
+      </div></article>`;}).join("");
+  return `<section class="sec"><div class="row"><h2>Кредитные карты</h2><button class="btn sm primary" data-add="cards">Добавить</button></div>${cards||`<div class="empty">Карт нет</div>`}</section>
+    <section class="sec"><div class="row"><h2>Кредиты</h2><button class="btn sm primary" data-add="loans">Добавить</button></div>${loans||`<div class="empty">Кредитов нет</div>`}
+    <p class="small muted" style="margin:0">Ставки кредитов Т-Банка посчитаны по графику платежей. Если в договоре другие, нажми «Изменить».</p></section>`;
+}
+
+/* ---------- Spending ---------- */
+const monthKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+const monthSpends=()=>state.spends.filter(s=>String(s.date||"").slice(0,7)===monthKey(TODAY));
+function spendBlock(v){
+  const ms=monthSpends(); const lim=v.expenses.reduce((s,e)=>s+num(e.amount),0); const spent=ms.reduce((s,x)=>s+num(x.amount),0);
+  const dim=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,0).getDate(), day=TODAY.getDate();
+  const pace=day>0?spent/day*dim:spent; const left=lim-spent;
+  const hot=[...v.cards].filter(c=>num(c.debt)>num(c.graceDebt)&&num(c.debt)>0).sort((a,b)=>num(b.rate)-num(a.rate))[0];
+  const cats=[...v.expenses].sort((a,b)=>num(b.amount)-num(a.amount)).map(e=>{const s=ms.filter(x=>x.cat===e.id).reduce((t,x)=>t+num(x.amount),0); const L=num(e.amount);
+    return `<div class="prow"><div class="row small"><span><b>${esc(e.name)}</b></span><span>${rub(s)} <span class="muted">из ${rub(L)}</span></span></div><div class="spendbar ${s>L?"over":""}"><i style="width:${L?Math.min(100,s/L*100):0}%"></i></div></div>`;}).join("");
+  const other=ms.filter(x=>!v.expenses.some(e=>e.id===x.cat)).reduce((t,x)=>t+num(x.amount),0);
+  return `<section class="sec"><h2>Траты в ${MON_P[TODAY.getMonth()]}</h2>
+    <div class="card pad" style="display:grid;gap:12px">
+      <div class="inline">
+        <label class="f" for="spCat">Категория<select id="spCat">${v.expenses.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join("")}<option value="other">Другое</option></select></label>
+        <label class="f" for="spAmt">Сумма, ₽<input id="spAmt" type="number" min="0" step="1" inputmode="decimal" placeholder="0"></label>
+        <button class="btn primary" data-spend="1">Записать</button>
+      </div>
+      <div class="row" style="flex-wrap:wrap"><span>Потрачено <b>${rub(spent)}</b> из ${rub(lim)}</span>${spent>0&&day>=5?`<span class="small ${pace>lim?"":"muted"}" style="${pace>lim?"color:var(--bad)":""}">в таком темпе за месяц ≈ ${rub(pace)}</span>`:""}</div>
+      ${left>0&&hot?`<div class="whatif-res">Если уложишься в лимит, в конце месяца останется до <b>${rub(left)}</b>. Их можно внести на карту «${esc(hot.name)}».</div>`:left<0?`<div class="alert bad small">Лимит превышен на ${rub(-left)}. Эти деньги придётся взять из платежей по долгам.</div>`:""}
+    </div>
+    <div class="card">${cats}${other>0?`<div class="prow"><div class="row small"><b>Другое</b><span>${rub(other)}</span></div></div>`:""}</div>
+    ${ms.length?`<div class="card">${[...ms].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,15).map(s=>`<div class="hist"><span class="dot" style="background:var(--life)"></span><span>${esc(s.catName||"Другое")}</span><b>${rub(s.amount)}</b><span class="when small muted">${fmtD(parseISO(s.date))} <button class="link" data-unspend="${esc(s.id)}">удалить</button></span></div>`).join("")}</div>`:""}
+  </section>`;
+}
+
+function renderBudget(v){
+  const inc=v.incomes.reduce((s,x)=>s+num(x.amount),0)+num(state.settings.extraIncome), exp=v.expenses.reduce((s,x)=>s+num(x.amount),0);
+  const loanPay=v.loans.filter(l=>num(l.balance)>0).reduce((s,l)=>s+num(l.payment),0);
+  const toCards=Math.max(0,inc-exp-loanPay);
+  const parts=[["Кредиты",loanPay,"var(--tbank)"],["Карты и досрочные",toCards,"var(--alfa)"],["Жизнь",exp,"var(--life)"]].filter(p=>p[1]>0);
+  const tot=Math.max(inc,1);
+  const row=(e,col,sub)=>`<tr><td>${esc(e.name)}${sub?`<div class="small muted">${sub}</div>`:""}</td><td class="r"><b>${rub(e.amount)}</b></td><td class="r" style="width:1%"><button class="btn sm" data-edit="${col}:${e.id}">Изменить</button></td></tr>`;
+  return spendBlock(v)+`<section class="sec"><h2>Куда уходит ${rub(inc)} в месяц</h2><div class="card pad" style="display:grid;gap:12px">
+      <div class="stack">${parts.map(p=>`<i style="width:${p[1]/tot*100}%;background:${p[2]}"></i>`).join("")}</div>
+      <div class="legend">${parts.map(p=>`<span><i class="dot" style="background:${p[2]}"></i>${p[0]} <b>${rub(p[1])}</b></span>`).join("")}</div>
+      ${inc-exp-loanPay<0?`<div class="small" style="color:var(--bad)">Расходы и кредиты больше дохода на ${rub(exp+loanPay-inc)}.</div>`:""}</div></section>
+    <section class="sec"><div class="row"><h2>Доходы</h2><button class="btn sm primary" data-add="incomes">Добавить</button></div><div class="card"><table>${v.incomes.map(e=>row(e,"incomes",num(e.day)?num(e.day)+"-го числа":"дата не указана")).join("")||`<tr><td class="muted">Нет доходов</td></tr>`}</table></div></section>
+    <section class="sec"><div class="row"><h2>Лимиты расходов в месяц</h2><button class="btn sm primary" data-add="expenses">Добавить</button></div><div class="card"><table>${[...v.expenses].sort((a,b)=>num(b.amount)-num(a.amount)).map(e=>row(e,"expenses",e.kind==="var"?"меняется от месяца к месяцу":"постоянный")).join("")||`<tr><td class="muted">Нет расходов</td></tr>`}</table></div></section>`;
+}
+
+/* ---------- Progress & cushion ---------- */
+function ringSVG(p){ const R=48,C=2*Math.PI*R, f=Math.max(0,Math.min(1,p));
+  return `<svg viewBox="0 0 112 112" aria-hidden="true"><circle cx="56" cy="56" r="${R}" fill="none" stroke="var(--sunk)" stroke-width="12"/>
+    <circle cx="56" cy="56" r="${R}" fill="none" stroke="var(--good)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C*f} ${C}" transform="rotate(-90 56 56)"/>
+    <text x="56" y="62" text-anchor="middle" style="font:700 20px var(--f-body);fill:var(--fg)">${Math.round(f*100)}%</text></svg>`; }
+function renderProgress(v){
+  const S=state.settings; const start=num(S.startDebt), cur=currentDebt(v);
+  const plan=buildPlan(v), minPlan=buildPlan(v,{minOnly:true});
+  const done=Math.max(0,start-cur), f=start>0?done/start:0;
+  const paidTotal=state.payments.reduce((s,p)=>s+num(p.amount),0);
+  const allDebts=[...v.cards.map(c=>({id:c.id,name:c.name,bank:c.bank,now:num(c.debt)})),...v.loans.map(l=>({id:l.id,name:l.name,bank:l.bank,now:num(l.balance)}))];
+  const sb=S.startBalances||{};
+  const closedN=allDebts.filter(d=>d.now<=0.5).length;
+  const saving=plan&&minPlan?Math.max(0,minPlan.interest-plan.interest):0;
+  const goal=num(S.cushionGoal), saved=num(S.cushionSaved), cf=goal>0?Math.min(1,saved/goal):0;
+  const cushWhen=plan&&plan.cushAt!=null?(plan.cushAt<0?"уже собрана":"к "+monD(plan.startY,plan.startM+plan.cushAt)):null;
+  return `<section class="card pad ring">${ringSVG(f)}<div style="display:grid;gap:4px"><div class="small muted">С ${S.startDate?fmtD(parseISO(S.startDate)):"начала плана"} погашено</div>
+      <div style="font:600 26px var(--f-display)">${rub(done)}</div><div class="small muted">из ${rub(start)} · осталось ${rub(cur)}</div>
+      ${start>0&&cur>start?`<div class="small" style="color:var(--warn)">Пока долг выше стартового из-за процентов по Альфе. Первые платежи это исправят.</div>`:""}</div></section>
+    <section class="stats">
+      <div class="stat"><span>Внесено</span><b>${rub(paidTotal)}</b><span>${state.payments.length} ${plural(state.payments.length,"платёж","платежа","платежей")}</span></div>
+      <div class="stat"><span>Закрыто долгов</span><b>${closedN} из ${allDebts.length}</b><span>${closedN?allDebts.filter(d=>d.now<=0.5).map(d=>esc(d.name)).join(", "):"первый — по плану"}</span></div>
+      <div class="stat"><span>Экономия по плану</span><b>${rub(saving)}</b><span>по сравнению с минимальными платежами</span></div>
+    </section>
+    <section class="sec"><h2>По каждому долгу</h2><div class="card">${allDebts.map(d=>{const st=num(sb[d.id])||d.now; const p=st>0?Math.max(0,Math.min(1,(st-d.now)/st)):0;
+      return `<div class="prow"><div class="row small"><span style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:${bankColor(d.bank)}"></span><b>${esc(d.name)}</b></span><span>${d.now<=0.5?`<span class="pill good">погашено</span>`:`осталось ${rub(d.now)}`}</span></div>
+        <div class="spendbar"><i style="width:${p*100}%;background:var(--good)"></i></div><div class="small muted">погашено ${rub(Math.max(0,st-d.now))} из ${rub(st)}</div></div>`;}).join("")}</div></section>
+    <section class="sec"><h2>Подушка безопасности</h2><div class="card pad" style="display:grid;gap:14px">
+      <div class="row"><span><b style="font-size:20px">${rub(saved)}</b> <span class="muted">из ${rub(goal)}</span></span>${cushWhen?`<span class="pill good">${cushWhen}</span>`:""}</div>
+      <div class="spendbar" style="height:12px"><i style="width:${cf*100}%;background:var(--good)"></i></div>
+      <div class="inline"><label class="f" for="cuAmt">Сумма, ₽<input id="cuAmt" type="number" min="0" step="500" inputmode="decimal" placeholder="0"></label>
+        <button class="btn primary" data-cush="1">Отложила</button><button class="btn" data-cush="-1">Сняла</button></div>
+      <div class="inline" style="border-top:1px solid var(--line);padding-top:14px">
+        <label class="f" for="cuGoal">Цель, ₽<input id="cuGoal" type="number" min="0" step="5000" inputmode="numeric" value="${goal||""}"></label>
+        <label class="f" for="cuMonthly">Откладывать в месяц, ₽<input id="cuMonthly" type="number" min="0" step="1000" inputmode="numeric" value="${num(S.cushionMonthly)||""}" placeholder="0"></label>
+        <label class="f" for="cuStart">Начать<select id="cuStart"><option value="after" ${S.cushionStart!=="now"?"selected":""}>после закрытия карт</option><option value="now" ${S.cushionStart==="now"?"selected":""}>сразу</option></select></label>
+      </div>
+      <div class="small muted">Подушка — деньги на непредвиденное, чтобы снова не брать кредитку. Обычно это 1–3 месяца расходов. Пока карты под 59% не закрыты, выгоднее сначала гасить их, поэтому по умолчанию копить начнём после.</div>
+    </div></section>
+    <section class="sec"><h2>История платежей</h2>${state.payments.length?`<div class="card">${[...state.payments].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(p=>{const d=allDebts.find(x=>x.id===p.debtId);
+      return `<div class="hist"><span class="dot" style="background:${bankColor(d&&d.bank)}"></span><span>${esc(p.debtName||(d&&d.name)||"")}${p.early?` <span class="pill neutral">досрочно</span>`:""}</span><b>${rub(p.amount)}</b><span class="when small muted">${fmtD(parseISO(p.date))} <button class="link" data-undo="${esc(p.id)}">отменить</button></span></div>`;}).join("")}</div>`:`<div class="empty">Платежей пока нет. Нажимай «Оплачено» на вкладке «Что платить», и они появятся здесь.</div>`}</section>`;
+}
+
+/* ---------- Writes ---------- */
+const strip=o=>{const {id,...rest}=o||{};return rest;};
+let busy=false;
+async function recordPayment(debtId,kind,amount,key,early){
+  if(!state.db) return toast("Хранилище недоступно в этом просмотре");
+  if(busy) return; busy=true;
+  try{
+    if(kind==="loan"){ const L=state.loans.find(x=>x.id===debtId); if(!L) throw 0; const bal=num(L.balance);
+      const interestPart=early?0:Math.min(amount,bal*num(L.rate)/1200); const applied=r2(Math.min(bal,amount-interestPart));
+      await state.db.collection("loans").doc(debtId).set({...strip(L),balance:r2(bal-applied)});
+      await state.db.collection("payments").doc().set({debtId,debtName:L.name,kind,amount:r2(amount),applied,graceApplied:0,key,early:!!early,date:todayISO()});
+    } else { const C=state.cards.find(x=>x.id===debtId); if(!C) throw 0; const est=accrue(C).debt; const nd=Math.max(0,est-amount); const applied=r2(est-nd); const ga=r2(Math.min(num(C.graceDebt),amount));
+      await state.db.collection("cards").doc(debtId).set({...strip(C),debt:r2(nd),debtDate:todayISO(),graceDebt:r2(num(C.graceDebt)-ga)});
+      await state.db.collection("payments").doc().set({debtId,debtName:C.name,kind,amount:r2(amount),applied,graceApplied:ga,key,early:false,date:todayISO()});
+    }
+    toast("Отмечено. Остаток долга уменьшен");
+  }catch(e){ toast("Не получилось сохранить"); } finally{ busy=false; }
+}
+async function undoPayment(pid){
+  const P=state.payments.find(p=>p.id===pid); if(!P||!state.db||busy) return; busy=true;
+  try{
+    if(P.kind==="loan"){ const L=state.loans.find(x=>x.id===P.debtId); if(L) await state.db.collection("loans").doc(L.id).set({...strip(L),balance:r2(num(L.balance)+num(P.applied))}); }
+    else { const C=state.cards.find(x=>x.id===P.debtId); if(C) await state.db.collection("cards").doc(C.id).set({...strip(C),debt:r2(num(C.debt)+num(P.applied)),graceDebt:r2(num(C.graceDebt)+num(P.graceApplied))}); }
+    await state.db.collection("payments").doc(pid).delete(); toast("Платёж отменён");
+  }catch(e){ toast("Не получилось отменить"); } finally{ busy=false; }
+}
+let settingsWriting=Promise.resolve();
+function saveSettings(patch){ state.settings={...state.settings,...patch}; render(); if(state.db){ const body={...state.settings}; settingsWriting=settingsWriting.then(()=>state.db.doc("settings/main").set(body)).catch(()=>toast("Не получилось сохранить настройки")); } }
+
+/* ---------- Forms ---------- */
+const FORMS={
+  loans:{title:"Кредит",fields:[["name","Название","text"],["bank","Банк","text"],["balance","Остаток долга, ₽","number"],["rate","Ставка, % годовых","number"],["payment","Платёж в месяц, ₽","number"],["day","День платежа","number","Число месяца"]]},
+  cards:{title:"Кредитная карта",fields:[["name","Название","text"],["bank","Банк","text"],["limit","Лимит, ₽","number"],["debt","Долг сейчас, ₽","number","Из приложения банка"],["rate","Ставка, % годовых","number"],["minPct","Обяз. платёж, % от долга","number"],["minFixed","Обяз. платёж из выписки, ₽","number","Если известен точно"],["day","Внести обяз. платёж до (число)","number"],["graceDebt","Сумма без процентов, ₽","number","0, если льготный период закончился"],["graceEnd","Льготный период до","date"]]},
+  incomes:{title:"Доход",fields:[["name","Название","text"],["amount","Сумма, ₽","number"],["day","Какого числа приходит","number"]]},
+  expenses:{title:"Расход",fields:[["name","Категория","text"],["amount","Лимит в месяц, ₽","number"],["kind","Тип","select",[["fixed","Постоянный"],["var","Меняется"]]]]}
+};
+const modalRoot=document.getElementById("modalRoot");
+function modal(html){ modalRoot.innerHTML=`<div class="overlay" id="ov"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  document.getElementById("ov").addEventListener("click",e=>{if(e.target.id==="ov")modalRoot.innerHTML="";});
+  const c=document.getElementById("cancelBtn"); if(c) c.onclick=()=>{modalRoot.innerHTML="";};
+  setTimeout(()=>{const f=modalRoot.querySelector("input");f&&f.focus();},30); }
+function openForm(col,id){
+  const def=FORMS[col]; const cur=id?(state[col].find(x=>x.id===id)||{}):(col==="cards"?{minPct:5}:col==="expenses"?{kind:"var"}:{});
+  const fld=([k,lab,type,hint])=>{const fid="f_"+k; if(type==="select") return `<label class="f" for="${fid}">${lab}<select id="${fid}" name="${k}">${hint.map(([v,t])=>`<option value="${v}" ${cur[k]===v?"selected":""}>${t}</option>`).join("")}</select></label>`;
+    return `<label class="f" for="${fid}">${lab}<input id="${fid}" name="${k}" type="${type}" ${type==="number"?'step="any" inputmode="decimal"':""} value="${esc(cur[k]??"")}" ${k==="name"?"required":""}>${hint?`<span class="hint">${hint}</span>`:""}</label>`;};
+  const fs=def.fields, rows=[]; for(let i=0;i<fs.length;i++){ if(i===0||fs[i][2]==="select"||!fs[i+1]||fs[i+1][2]==="select"){rows.push(fld(fs[i]));continue;} rows.push(`<div class="two">${fld(fs[i])}${fld(fs[i+1])}</div>`); i++; }
+  modal(`<h3>${id?"Изменить":"Добавить"}: ${def.title.toLowerCase()}</h3><form id="frm">${rows.join("")}<div class="row" style="flex-wrap:wrap"><div>${id?`<button type="button" class="btn danger" id="delBtn">Удалить</button>`:""}</div><div style="display:flex;gap:8px"><button type="button" class="btn" id="cancelBtn">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></div></form>`);
+  const del=document.getElementById("delBtn");
+  if(del) del.onclick=async()=>{ if(del.dataset.armed!=="1"){del.dataset.armed="1";del.textContent="Точно удалить?";return;} try{await state.db.collection(col).doc(id).delete();modalRoot.innerHTML="";toast("Удалено");}catch(e){toast("Не получилось удалить");} };
+  document.getElementById("frm").onsubmit=async e=>{ e.preventDefault(); const fd=new FormData(e.target); const body={...strip(cur)};
+    def.fields.forEach(([k,,type])=>{const val=fd.get(k); body[k]=type==="number"?num(val):String(val??"").trim();});
+    if(col==="cards"){ const prev=id?state.cards.find(x=>x.id===id):null; body.debtDate=(prev&&num(prev.debt)===body.debt&&prev.debtDate)?prev.debtDate:todayISO(); }
+    try{ const ref=id?state.db.collection(col).doc(id):state.db.collection(col).doc(); await ref.set(body); modalRoot.innerHTML=""; toast("Сохранено"); }catch(err){ toast("Не получилось сохранить"); } };
+}
+function openPay(debtId,kind,amount,key,early){
+  const d=(kind==="loan"?state.loans:state.cards).find(x=>x.id===debtId); if(!d) return;
+  modal(`<h3>Оплачено: ${esc(d.name)}</h3><form id="payFrm"><label class="f" for="payAmt">Сколько внесла, ₽<input id="payAmt" type="number" step="0.01" inputmode="decimal" value="${amount}" required></label>
+    <div class="small muted">${kind==="loan"?(early?"Вся сумма уменьшит остаток кредита.":"Из платежа часть уходит на проценты; остаток кредита уменьшится на остальное."):"Долг по карте уменьшится на эту сумму, а отсчёт процентов начнётся заново."}</div>
+    <div class="row" style="justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelBtn">Отмена</button><button class="btn primary" type="submit">Отметить</button></div></form>`);
+  document.getElementById("payFrm").onsubmit=async e=>{ e.preventDefault(); const a=num(document.getElementById("payAmt").value); if(a<=0) return toast("Впиши сумму"); modalRoot.innerHTML=""; await recordPayment(debtId,kind,a,key,early); };
+}
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);}
+
+app.addEventListener("click",async e=>{
+  const g=e.target.closest("[data-goto]"); if(g){ setTab(g.dataset.goto); return; }
+  const a=e.target.closest("[data-add]"); if(a){ if(!state.db) return toast("Хранилище недоступно в этом просмотре"); openForm(a.dataset.add); return; }
+  const ed=e.target.closest("[data-edit]"); if(ed){ if(!state.db) return toast("Хранилище недоступно в этом просмотре"); const [c,id]=ed.dataset.edit.split(":"); openForm(c,id); return; }
+  const pb=e.target.closest("[data-pay]"); if(pb){ const [id,kind,amt,key,early]=pb.dataset.pay.split("|"); openPay(id,kind,num(amt),key,early==="1"); return; }
+  const un=e.target.closest("[data-undo]"); if(un){ if(un.dataset.armed!=="1"){un.dataset.armed="1";un.textContent="точно отменить?";return;} undoPayment(un.dataset.undo); return; }
+  const sp=e.target.closest("[data-spend]"); if(sp){ const amt=num(document.getElementById("spAmt").value); const cat=document.getElementById("spCat").value; if(amt<=0) return toast("Впиши сумму траты"); if(!state.db) return toast("Хранилище недоступно в этом просмотре");
+    const ex=state.expenses.find(x=>x.id===cat); sp.disabled=true; try{ await state.db.collection("spends").doc().set({cat,catName:ex?ex.name:"Другое",amount:r2(amt),date:todayISO()}); toast("Записано"); }catch(_){ toast("Не получилось записать"); sp.disabled=false; } return; }
+  const us=e.target.closest("[data-unspend]"); if(us){ try{ await state.db.collection("spends").doc(us.dataset.unspend).delete(); }catch(_){ toast("Не получилось удалить"); } return; }
+  const cu=e.target.closest("[data-cush]"); if(cu){ const amt=num(document.getElementById("cuAmt").value); if(amt<=0) return toast("Впиши сумму"); saveSettings({cushionSaved:r2(Math.max(0,num(state.settings.cushionSaved)+amt*num(cu.dataset.cush)))}); toast(cu.dataset.cush==="1"?"Подушка пополнена":"Записала, что сняла"); return; }
+  const ck=e.target.closest("[data-check]"); if(ck){ const id=ck.dataset.check; const inp=document.getElementById("chk_"+id);
+    if(!inp||!inp.value.trim()) return toast("Впиши сумму долга из приложения банка"); if(!state.db) return toast("Хранилище недоступно в этом просмотре");
+    const C=state.cards.find(x=>x.id===id); ck.disabled=true;
+    state.db.collection("cards").doc(id).set({...strip(C),debt:num(inp.value),debtDate:todayISO()}).then(()=>toast("Долг обновлён, следующая сверка через неделю")).catch(()=>{ck.disabled=false;toast("Не получилось сохранить");}); }
+});
+const timers={};
+const debounce=(k,fn,ms=600)=>{clearTimeout(timers[k]);timers[k]=setTimeout(fn,ms);};
+app.addEventListener("input",e=>{ const t=e.target;
+  if(t.id==="wiAmount") debounce("wi",()=>{state.whatif.amount=Math.max(0,num(t.value)); render();},400);
+  if(t.id==="extraIncome") debounce("ei",()=>saveSettings({extraIncome:Math.max(0,num(t.value))}));
+  if(t.id==="cuGoal") debounce("cg",()=>saveSettings({cushionGoal:Math.max(0,num(t.value))}));
+  if(t.id==="cuMonthly") debounce("cm",()=>saveSettings({cushionMonthly:Math.max(0,num(t.value))}));
+});
+app.addEventListener("change",e=>{ const t=e.target;
+  if(t.id==="wiMonth"){ state.whatif.k=num(t.value); render(); }
+  if(t.id==="cuStart") saveSettings({cushionStart:t.value});
+});
+
+/* ---------- Boot ---------- */
+render();
+(async()=>{
+  let db=null; try{ db=window.claude&&await window.claude.use("db"); }catch(_){ db=null; }
+  state.db=db||null;
+  if(!db){ state.loaded=true; render(); return; }
+  const got=new Set(); const check=()=>{ if(got.size<COLS.length+1) return; state.loaded=true; render(); };
+  const typing=()=>{const a=document.activeElement;return !!(a&&app.contains(a)&&(a.tagName==="INPUT")&&a.value);};
+  const upd=()=>{ if(!state.loaded) check(); else if(modalRoot.innerHTML===""&&!typing()) render(); };
+  COLS.forEach(c=>db.collection(c).onSnapshot(s=>{state[c]=s.docs.map(d=>({id:d.id,...d.data()}));got.add(c);upd();},()=>{got.add(c);check();}));
+  db.doc("settings/main").onSnapshot(s=>{ if(s.exists){ state.settings={...DEF,...s.data()}; } got.add("settings"); upd(); },()=>{got.add("settings");check();});
+  setTimeout(()=>{ if(!state.loaded){ state.loaded=true; render(); } },8000);
+})();
+})();
+</script>
+</body></html>
